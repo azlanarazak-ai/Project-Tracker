@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Project Tracker</title>
+<style>
+  :root {
+    --blue-900: #0b3d6e;
+    --blue-700: #1259a0;
+    --blue-500: #1f7ad4;
+    --blue-100: #dceaf7;
+    --blue-50: #f2f8fd;
+    --ink: #1d2b3a;
+    --muted: #5c6f83;
+    --line: #dbe6f0;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background: var(--blue-50);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, var(--blue-900), var(--blue-700));
+    color: #fff;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .drop {
+    width: 42px; height: 42px; border-radius: 50% 50% 50% 4px;
+    background: rgba(255,255,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.3px; }
+  header p { font-size: 13px; opacity: 0.85; }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+    display: grid;
+    gap: 24px;
+  }
+  section {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: 0 2px 8px rgba(11,61,110,0.05);
+  }
+  section h2 {
+    font-size: 16px;
+    color: var(--blue-900);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  section h2 .num {
+    background: var(--blue-100);
+    color: var(--blue-700);
+    width: 24px; height: 24px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  section > p.sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+  /* Add form */
+  .add-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .add-row input[type="text"] {
+    flex: 1 1 260px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+  }
+  .add-row input[type="text"]:focus { border-color: var(--blue-500); }
+  .add-row input.note-input { flex: 1 1 220px; }
+  button {
+    background: var(--blue-700);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  button:hover { background: var(--blue-500); }
+  button.ghost {
+    background: #fff;
+    color: var(--blue-700);
+    border: 1px solid var(--line);
+  }
+  button.ghost:hover { background: var(--blue-50); }
+
+  /* Project cards */
+  .cards { display: grid; gap: 12px; }
+  .card {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--blue-500);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #fff;
+  }
+  .card .info { flex: 1 1 240px; min-width: 0; }
+  .card .name { font-weight: 600; font-size: 15px; }
+  .card .note { font-size: 13px; color: var(--muted); }
+  .stage-badge {
+    display: inline-block;
+    background: var(--blue-100);
+    color: var(--blue-900);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .card .actions { display: flex; gap: 8px; align-items: center; }
+  .card button { padding: 7px 12px; font-size: 13px; }
+  .stage-progress { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  .empty-msg {
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    background: var(--blue-50);
+  }
+
+  /* Stage board */
+  .board {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .stage-chip {
+    flex: 0 0 auto;
+    text-align: center;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--blue-50);
+    color: var(--muted);
+    position: relative;
+    min-width: 92px;
+  }
+  .stage-chip .cnt {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blue-700);
+  }
+  .stage-chip.active {
+    background: var(--blue-700);
+    border-color: var(--blue-700);
+    color: #fff;
+  }
+  .stage-chip.active .cnt { color: #fff; }
+
+  /* Summary */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .summary-cell {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: var(--blue-50);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--ink);
+  }
+  .summary-cell:hover { border-color: var(--blue-500); }
+  .summary-cell.selected {
+    border-color: var(--blue-700);
+    background: var(--blue-100);
+  }
+  .summary-cell .stage-name { font-size: 12px; color: var(--muted); display: block; }
+  .summary-cell .stage-count { font-size: 20px; font-weight: 700; color: var(--blue-900); }
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .filter-bar span { font-size: 13px; color: var(--muted); }
+  .filter-hint { font-size: 13px; color: var(--blue-700); font-weight: 600; }
+  .filtered-note {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding-bottom: 32px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="drop">💧</div>
+  <div>
+    <h1>Water Project Tracker</h1>
+    <p>Track delivery from proposal to final account — Malaysian water &amp; utility projects</p>
+  </div>
+</header>
+
+<main>
+  <!-- 1. PROJECTS -->
+  <section id="section-projects">
+    <h2><span class="num">1</span> Projects</h2>
+    <p class="sub">All active projects, with current stage and a short note.</p>
+    <div class="add-row">
+      <input type="text" id="new-name" placeholder="Project name, e.g. Taman Indah Pump Station Upgrade">
+      <input type="text" id="new-note" class="note-input" placeholder="Short note (optional)">
+      <button id="add-btn">＋ Add Project</button>
+    </div>
+    <div class="cards" id="project-cards"></div>
+  </section>
+
+  <!-- 2. STAGE BOARD -->
+  <section id="section-board">
+    <h2><span class="num">2</span> Stage Board</h2>
+    <p class="sub">The full delivery flow, in order. Counts show how many projects sit in each stage. Use “Next” on a project card to advance it one stage.</p>
+    <div class="board" id="stage-board"></div>
+  </section>
+
+  <!-- 3. SUMMARY -->
+  <section id="section-summary">
+    <h2><span class="num">3</span> Summary</h2>
+    <p class="sub">Count of projects in each stage. Click a stage to filter the project list.</p>
+    <div class="summary-grid" id="summary-grid"></div>
+    <div class="filter-bar" id="filter-bar" style="display:none;">
+      <span>Filtering:</span>
+      <span class="filter-hint" id="filter-hint"></span>
+      <button class="ghost" id="clear-filter">Clear Filter</button>
+    </div>
+    <div class="cards" id="filtered-cards"></div>
+    <div class="filtered-note" id="filtered-note"></div>
+  </section>
+</main>
+
+<footer>Sample data only — nothing is saved between visits.</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var STAGES = [
+    "Proposal",
+    "Bid / Tender",
+    "Contract Award",
+    "PO",
+    "DO",
+    "Mobilisation",
+    "Design",
+    "Procurement",
+    "Execution",
+    "Testing / Commissioning",
+    "Handover / Takeover",
+    "INV",
+    "Defects Liability",
+    "Final Account"
+  ];
+
+  var projects = [
+    { id: 1, name: "Langat River Intake Upgrade, Selangor", note: "Awaiting tender submission from contractor.", stage: 1 },
+    { id: 2, name: "Kuala Terengganu WTP Phase 2", note: "Civil works 60% complete on site.", stage: 8 },
+    { id: 3, name: "Kota Kinabalu Pipe Replacement (Zone 4)", note: "Defects walk-through scheduled next month.", stage: 12 }
+  ];
+  var nextId = 4;
+  var filterStage = null; // index or null
+
+  function el(id) { return document.getElementById(id); }
+
+  function stageCount(i) {
+    var c = 0;
+    for (var j = 0; j < projects.length; j++) if (projects[j].stage === i) c++;
+    return c;
+  }
+
+  function cardHtml(p, filteredView) {
+    return (
+      '<div class="card" data-id="' + p.id + '">' +
+        '<div class="info">' +
+          '<div class="name">' + escapeHtml(p.name) + '</div>' +
+          '<div class="note">' + escapeHtml(p.note || "No note") + '</div>' +
+        '</div>' +
+        '<span class="stage-badge">' + escapeHtml(STAGES[p.stage]) + '</span>' +
+        '<span class="stage-progress">Stage ' + (p.stage + 1) + ' / ' + STAGES.length + '</span>' +
+        '<div class="actions">' +
+          (p.stage < STAGES.length - 1
+            ? '<button class="next-btn" data-id="' + p.id + '">Next ▸</button>'
+            : '<button class="ghost" disabled>Completed</button>') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function render() {
+    // Section 1: project list
+    var listEl = el("project-cards");
+    if (projects.length === 0) {
+      listEl.innerHTML = '<div class="empty-msg">No projects yet — add one above.</div>';
+    } else {
+      listEl.innerHTML = projects.map(function (p) { return cardHtml(p); }).join("");
+    }
+
+    // Section 2: stage board
+    var board = "";
+    for (var i = 0; i < STAGES.length; i++) {
+      board += '<div class="stage-chip' + (stageCount(i) > 0 ? " active" : "") + '">' +
+        escapeHtml(STAGES[i]) + '<span class="cnt">' + stageCount(i) + '</span></div>';
+    }
+    el("stage-board").innerHTML = board;
+
+    // Section 3: summary cells
+    var cells = "";
+    for (var k = 0; k < STAGES.length; k++) {
+      var c = stageCount(k);
+      if (c === 0 && !filterStage) continue; // keep grid tidy when unfiltered
+      if (c === 0 && filterStage !== k) continue;
+      cells += '<button type="button" class="summary-cell' + (filterStage === k ? " selected" : "") +
+        '" data-stage="' + k + '">' +
+        '<span class="stage-name">' + escapeHtml(STAGES[k]) + '</span>' +
+        '<span class="stage-count">' + c + '</span></button>';
+    }
+    if (!cells) cells = '<div class="empty-msg" style="grid-column:1/-1;">No projects in this stage.</div>';
+    el("summary-grid").innerHTML = cells;
+
+    // Filtered list
+    var fListEl = el("filtered-cards");
+    var bar = el("filter-bar");
+    var note = el("filtered-note");
+    if (filterStage === null) {
+      bar.style.display = "none";
+      fListEl.innerHTML = '<div class="empty-msg">Click a stage above to filter the project list.</div>';
+      note.style.display = "none";
+    } else {
+      var matches = projects.filter(function (p) { return p.stage === filterStage; });
+      bar.style.display = "flex";
+      el("filter-hint").textContent = STAGES[filterStage] + " (" + matches.length + " project" + (matches.length === 1 ? "" : "s") + ")";
+      fListEl.innerHTML = matches.length
+        ? matches.map(function (p) { return cardHtml(p, true); }).join("")
+        : '<div class="empty-msg">No projects in ' + escapeHtml(STAGES[filterStage]) + '.</div>';
+      note.style.display = "block";
+      note.textContent = "Total projects across all stages: " + projects.length;
+    }
+  }
+
+  function addProject(name, note) {
+    projects.push({ id: nextId++, name: name, note: note, stage: 0 });
+    render();
+  }
+
+  function moveStage(id) {
+    for (var i = 0; i < projects.length; i++) {
+      if (projects[i].id === id && projects[i].stage < STAGES.length - 1) {
+        projects[i].stage++;
+        break;
+      }
+    }
+    render();
+  }
+
+  // Wire events (delegated, works after re-render)
+  el("add-btn").addEventListener("click", function () {
+    var name = el("new-name").value.trim();
+    if (!name) { el("new-name").focus(); return; }
+    addProject(name, el("new-note").value.trim());
+    el("new-name").value = "";
+    el("new-note").value = "";
+    el("new-name").focus();
+  });
+  el("new-name").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") el("add-btn").click();
+  });
+  el("new-note").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") el("add-btn").click();
+  });
+
+  document.addEventListener("click", function (e) {
+    var nextBtn = e.target.closest(".next-btn");
+    if (nextBtn) { moveStage(Number(nextBtn.getAttribute("data-id"))); return; }
+    var cell = e.target.closest(".summary-cell");
+    if (cell) { filterStage = Number(cell.getAttribute("data-stage")); render(); return; }
+    if (e.target.closest("#clear-filter")) { filterStage = null; render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
